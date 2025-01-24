@@ -150,8 +150,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/Users/emmaplante/Desktop/comp371-assignments/a1/cmake-build-debug",
-		"source" : "/Users/emmaplante/Desktop/comp371-assignments/a1"
+		"build" : "/Users/emmaplante/Desktop/comp371-assignments/cmake-build-debug",
+		"source" : "/Users/emmaplante/Desktop/comp371-assignments"
 	},
 	"version" : 
 	{
