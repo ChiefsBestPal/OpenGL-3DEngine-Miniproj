@@ -47,4 +47,18 @@ public:
         return sqrt(pow(x - other.x, 2) + pow(y - other.y, 2) + pow(z - other.z, 2));
     }
 
+    // Operator overload for vector operations
+    Point operator+(const Point& other) const {return {x + other.x, y + other.y, z + other.z};}
+    Point operator-(const Point& other) const {return {x - other.x, y - other.y, z - other.z};}
+    Point operator*(int scalar) const {return {x * scalar, y * scalar, z * scalar};}
+    Point operator/(int scalar) const { return {x / scalar, y / scalar, z / scalar};}
+    // Operator overload for boolean comparison operations
+    bool operator==(const Point& other) const { return x == other.x && y == other.y && z == other.z; }
+    bool operator!=(const Point& other) const { return !(*this == other); }
+
+    // Tuple conversion for easy unpacking of coordinates
+    tuple<int, int, int> as_tuple() const {return make_tuple(x, y, z);}
+
+    // Non-member function ostream overload for easy printing of Point objects
+    friend ostream& operator<<(ostream& os, const Point& point) { return os << point.toString(); }
 };
