@@ -195,3 +195,56 @@ public:
 
 
 };
+
+// Driver code
+// TODO Make better menu system with options to retry
+// TODO Assignment mentions "Driver Class" so maybe make a class for this
+int part2_main() {
+    Triangle t;
+    int choice;
+    do {
+        cout << "Menu: \n";
+        cout << "0. Create Triangle\n";
+        cout << "1. Display Triangle Coordinates\n";
+        cout << "2. Translate Triangle\n";
+        cout << "3. Calculate Triangle Area\n";
+        cout << "4. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch(choice) {
+            case 0:
+                int x1, y1, z1, x2, y2, z2, x3, y3, z3;
+                cout << "Enter coordinates of vertex 1 (x, y, z): ";
+                cin >> x1 >> y1 >> z1;
+                cout << "Enter coordinates of vertex 2 (x, y, z): ";
+                cin >> x2 >> y2 >> z2;
+                cout << "Enter coordinates of vertex 3 (x, y, z): ";
+                cin >> x3 >> y3 >> z3;
+                t = Triangle(Point(x1, y1, z1), Point(x2, y2, z2), Point(x3, y3, z3));
+                cout << "Triangle created successfully.\n";
+                break;
+            case 1:
+                cout << t << endl;
+                break;
+            case 2:
+                int d;
+                char axis;
+                cout << "Enter translation distance (d) and axis (x, y, z): ";
+                cin >> d >> axis;
+                t.translate(d, axis);
+                break;
+            case 3:
+                cout << "Area of the triangle: " << t.calcArea() << endl;
+                break;
+            case 4:
+                cout << "Exiting...\n";
+                return 0;
+            default:
+                cout << "Invalid choice! Try again.\n";
+                break;
+        }
+    } while(true);
+
+    return 0;
+}
