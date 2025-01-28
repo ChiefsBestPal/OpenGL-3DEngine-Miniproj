@@ -62,3 +62,58 @@ public:
     // Non-member function ostream overload for easy printing of Point objects
     friend ostream& operator<<(ostream& os, const Point& point) { return os << point.toString(); }
 };
+
+// Triangle class
+class Triangle {
+private:
+    Point *vertex_1;
+    Point *vertex_2;
+    Point *vertex_3;
+public:
+    // Constructor with three Point objects
+    explicit Triangle(const Point &v1, const Point &v2, const Point &v3) {
+        if (!Triangle::isValidTrianglePoints(v1, v2, v3)) {
+            throw logic_error("The points do not form a valid triangle.");
+        }
+        // Dynamically allocate a copy of the Point object referenced and assign new pointer to it
+        vertex_1 = new Point(v1);
+        vertex_2 = new Point(v2);
+        vertex_3 = new Point(v3);
+    }
+
+    // Default constructor, setting pointers to null
+    Triangle() : vertex_1(nullptr), vertex_2(nullptr), vertex_3(nullptr) {}
+
+    // Move constructor
+//    Triangle(Triangle&& other) noexcept
+//            : vertex_1(other.vertex_1), vertex_2(other.vertex_2), vertex_3(other.vertex_3) {
+//        other.vertex_1 = other.vertex_2 = other.vertex_3 = nullptr;
+//    }
+
+    // Clone function to create a deep copy of the triangle
+    Triangle *clone() const {
+        return new Triangle(*vertex_1, *vertex_2, *vertex_3);
+    }
+
+    // Prevent Copy constructor
+    // Each Triangle is a uniquely labeled mesh in 3D space
+    // (In favor of move semantics or deep copy clone)
+    Triangle(const Triangle &) = delete;
+    // Move ptr assignment constructor if need remove: Triangle& operator=(const Triangle&) = delete;
+
+    // Destructor (freeing dynamically allocated memory i.e. the 3 raw vertices pointers)
+    ~Triangle() {
+        delete vertex_1;
+        delete vertex_2;
+        delete vertex_3;
+    }
+
+    // Utility Function to check if the points form a valid triangle using inequality theorem
+    static bool isValidTrianglePoints(const Point& v1, const Point& v2, const Point& v3) {
+        constexpr double EPSILON = 1e-9;
+        double a = v1.distanceTo(v2);
+        double b = v2.distanceTo(v3);
+        double c = v3.distanceTo(v1);
+        return a + b > c + EPSILON && b + c > a + EPSILON && c + a > b + EPSILON;
+    }
+};
