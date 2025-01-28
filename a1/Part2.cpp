@@ -19,10 +19,6 @@ public:
     int getX() const { return x; }
     int getY() const { return y; }
     int getZ() const { return z; }
-    // Setters
-    void setX(int x) { this->x = x; }
-    void setY(int y) { this->y = y; }
-    void setZ(int z) { this->z = z; }
 
     // Translate function to move point along specified axis
     int translate(int d, char axis) {
@@ -61,18 +57,20 @@ public:
 
     // Non-member function ostream overload for easy printing of Point objects
     friend ostream& operator<<(ostream& os, const Point& point) { return os << point.toString(); }
+
+
 };
 
 // Triangle class
 class Triangle {
 private:
-    Point *vertex_1;
-    Point *vertex_2;
-    Point *vertex_3;
+    Point* vertex_1;
+    Point* vertex_2;
+    Point* vertex_3;
 public:
     // Constructor with three Point objects
-    explicit Triangle(const Point &v1, const Point &v2, const Point &v3) {
-        if (!Triangle::isValidTrianglePoints(v1, v2, v3)) {
+    explicit Triangle(const Point& v1, const Point& v2, const Point& v3) {
+        if (!Triangle::isValidTrianglePoints(v1,v2,v3)) {
             throw logic_error("The points do not form a valid triangle.");
         }
         // Dynamically allocate a copy of the Point object referenced and assign new pointer to it
@@ -91,14 +89,14 @@ public:
 //    }
 
     // Clone function to create a deep copy of the triangle
-    Triangle *clone() const {
+    Triangle* clone() const {
         return new Triangle(*vertex_1, *vertex_2, *vertex_3);
     }
 
     // Prevent Copy constructor
     // Each Triangle is a uniquely labeled mesh in 3D space
     // (In favor of move semantics or deep copy clone)
-    Triangle(const Triangle &) = delete;
+    Triangle(const Triangle&) = delete;
     // Move ptr assignment constructor if need remove: Triangle& operator=(const Triangle&) = delete;
 
     // Destructor (freeing dynamically allocated memory i.e. the 3 raw vertices pointers)
@@ -108,6 +106,84 @@ public:
         delete vertex_3;
     }
 
+    // Getter (Use point index for less verbosity)
+    Point* getVertex(int index) const {
+        switch (index) {
+            case 1: return vertex_1;
+            case 2: return vertex_2;
+            case 3: return vertex_3;
+            default: return nullptr;
+        }
+    }
+    // Setters (Use point index for less verbosity)
+    void setVertex(int index, const Point& v) {
+        Point* vertices[] = {vertex_1, vertex_2, vertex_3};
+        int v1 = (index + 1) % 3, v2 = (index + 2) % 3;
+        if (!Triangle::isValidTrianglePoints(v, *vertices[v1], *vertices[v2])) {
+            throw invalid_argument("The new point does not form a valid triangle.");
+        }
+        *vertices[index] = v;
+    }
+    // Translate function for the entire triangle
+    void translate(int d, char axis) {
+        if (vertex_1) vertex_1->translate(d, axis);
+        if (vertex_2) vertex_2->translate(d, axis);
+        if (vertex_3) vertex_3->translate(d, axis);
+
+        if (!isValidTrianglePoints(*vertex_1,*vertex_2,*vertex_3)) {
+            throw logic_error("The points after transform do not form a valid triangle.");
+        }
+    }
+
+    /*
+     * Returns the area of the triangle using the cross product magnitude method in 3D Euclidean space
+     *
+     * Area of a triangle with vertices A(x1, y1, z1), B(x2, y2, z2), C(x3, y3, z3) is given by:
+     * 0.5 * |AB x AC|
+     */
+    double calcArea() const {
+        if (!vertex_1 || !vertex_2 || !vertex_3) return 0.0;
+
+        // Using the cross product method to calculate area of triangle in R3 space
+        auto [x1, y1, z1] = vertex_1->as_tuple();
+        auto [x2, y2, z2] = vertex_2->as_tuple();
+        auto [x3, y3, z3] = vertex_3->as_tuple();
+
+        // Vectors AB and AC
+        int ABx = x2 - x1, ABy = y2 - y1, ABz = z2 - z1;
+        int ACx = x3 - x1, ACy = y3 - y1, ACz = z3 - z1;
+
+        // Cross product of AB and AC by 3x3 matrix determinant
+        long long cross_x = static_cast<long long>(ABy) * ACz - static_cast<long long>(ABz) * ACy;
+        long long cross_y = static_cast<long long>(ABz) * ACx - static_cast<long long>(ABx) * ACz;
+        long long cross_z = static_cast<long long>(ABx) * ACy - static_cast<long long>(ABy) * ACx;
+
+        // Area of triangle is half the magnitude of the cross product AB x AC
+        // (Since that cross product is a normal vector to the triangle plane and that vector's magnitude is the area of the parallelogram formed by the sides vectors)
+        long long cross_product_magnitude_squared = cross_x * cross_x + cross_y * cross_y + cross_z * cross_z;
+        if (cross_product_magnitude_squared < 0) {
+            throw overflow_error("Overflow occurred during area calculation.");
+        }
+
+        double area = 0.5 * sqrt(static_cast<double>(cross_product_magnitude_squared));
+        if (isinf(area) || isnan(area)) {
+            throw runtime_error("Invalid numerical area calculation.");
+        }
+
+        return area;
+    }
+
+    // Display function to show triangle coordinates
+    string toString() const {
+        stringstream ss;
+        ss << "Triangle: {\n  Vertex1: (" << vertex_1->getX() << "," << vertex_1->getY() << "," << vertex_1->getZ() << ")\n"
+           << "  Vertex2: (" << vertex_2->getX() << "," << vertex_2->getY() << "," << vertex_2->getZ() << ")\n"
+           << "  Vertex3: (" << vertex_3->getX() << "," << vertex_3->getY() << "," << vertex_3->getZ() << ")\n}";
+        return ss.str();
+    }
+    // Non-member function ostream overload for easy printing of Triangle objects
+    friend ostream& operator<<(ostream& os, const Triangle& tri) { return os << tri.toString();}
+
     // Utility Function to check if the points form a valid triangle using inequality theorem
     static bool isValidTrianglePoints(const Point& v1, const Point& v2, const Point& v3) {
         constexpr double EPSILON = 1e-9;
@@ -116,4 +192,6 @@ public:
         double c = v3.distanceTo(v1);
         return a + b > c + EPSILON && b + c > a + EPSILON && c + a > b + EPSILON;
     }
+
+
 };
