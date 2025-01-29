@@ -7,91 +7,106 @@
 #include <tuple>
 #include <cmath>
 #include <string>
+namespace Part2Geometry {
+    class Point {
+    private:
+        int x, y, z;
 
-class Point {
-private:
-    int x, y, z;
+    public:
+        // Constructor
+        Point(int x = 0, int y = 0, int z = 0);
 
-public:
-    // Constructor
-    Point(int x = 0, int y = 0, int z = 0);
+        // Destructor
+        ~Point();
 
-    // Destructor
-    ~Point();
+        // Getters
+        int getX() const;
 
-    // Getters
-    int getX() const;
-    int getY() const;
-    int getZ() const;
+        int getY() const;
 
-    // Translate function
-    int translate(int d, char axis);
+        int getZ() const;
 
-    // Display function
-    std::string toString() const;
+        // Translate function
+        int translate(int d, char axis);
 
-    // Distance between this point and another point
-    inline double distanceTo(const Point& other) const;
+        // Display function
+        std::string toString() const;
 
-    // Operator overloads for vector operations
-    Point operator+(const Point& other) const;
-    Point operator-(const Point& other) const;
-    Point operator*(int scalar) const;
-    Point operator/(int scalar) const;
+        // Distance between this point and another point
+        inline double distanceTo(const Point &other) const;
 
-    // Comparison operators
-    bool operator==(const Point& other) const;
-    bool operator!=(const Point& other) const;
+        // Operator overloads for vector operations
+        Point operator+(const Point &other) const;
 
-    // Convert to tuple
-    inline std::tuple<int, int, int> as_tuple() const;
+        Point operator-(const Point &other) const;
 
-    // Stream output operator
-    friend std::ostream& operator<<(std::ostream& os, const Point& point);
-};
+        Point operator*(int scalar) const;
 
-class Triangle {
-private:
-    Point* vertex_1;
-    Point* vertex_2;
-    Point* vertex_3;
+        Point operator/(int scalar) const;
 
-public:
-    // Constructors
-    explicit Triangle(const Point& v1, const Point& v2, const Point& v3);
-    Triangle();
+        // Comparison operators
+        bool operator==(const Point &other) const;
 
-    // Prevent Copy constructor
-    // Each Triangle is a uniquely labeled mesh in 3D space
-    // (In favor of move semantics or deep copy clone)
-    Triangle(const Triangle&) = delete;
-    // Move ptr assignment constructor if need remove: Triangle& operator=(const Triangle&) = delete;
+        bool operator!=(const Point &other) const;
+
+        // Convert to tuple
+        inline std::tuple<int, int, int> as_tuple() const;
+
+        // Stream output operator
+        friend std::ostream &operator<<(std::ostream &os, const Point &point);
+    };
+
+    class Triangle {
+    private:
+        Point *vertex_1;
+        Point *vertex_2;
+        Point *vertex_3;
+
+    public:
+        // Constructors
+        explicit Triangle(const Point &v1, const Point &v2, const Point &v3);
+
+        Triangle();
+
+        // Prevent Copy constructor
+        // Each Triangle is a uniquely labeled mesh in 3D space
+        // (In favor of move semantics or deep copy clone)
+        Triangle(const Triangle &) = delete;
+        // Move ptr assignment constructor if need remove: Triangle& operator=(const Triangle&) = delete;
 
 
-    // Destructor
-    ~Triangle();
+        // Destructor
+        ~Triangle();
 
-    // Clone function
-    Triangle* clone() const;
+        // Clone function
+        Triangle *clone() const;
 
-    // Getters and Setters for vertices
-    Point* getVertex(int index) const;
-    void setVertex(int index, const Point& v);
+        // Getters and Setters for vertices
+        Point *getVertex(int index) const;
 
-    // Translate function
-    void translate(int d, char axis);
+        void setVertex(int index, const Point &v);
 
-    // Calculate area
-    double calcArea() const;
+        // Translate function
+        void translate(int d, char axis);
 
-    // Display function
-    std::string toString() const;
+        // Calculate area
+        double calcArea() const;
 
-    // Stream output operator
-    friend std::ostream& operator<<(std::ostream& os, const Triangle& tri);
+        // Display function
+        std::string toString() const;
 
-    // Utility function to check for a valid triangle
-    static bool isValidTrianglePoints(const Point& v1, const Point& v2, const Point& v3);
-};
+        // Stream output operator
+        friend std::ostream &operator<<(std::ostream &os, const Triangle &tri);
 
+        // Utility function to check for a valid triangle
+        static bool isValidTrianglePoints(const Point &v1, const Point &v2, const Point &v3);
+    };
+}
+
+namespace Part2Driver {
+    class Driver {
+    public:
+        void run();
+    };
+}
 #endif // PART2_H
