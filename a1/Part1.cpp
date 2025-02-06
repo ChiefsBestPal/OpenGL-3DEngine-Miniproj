@@ -2,7 +2,7 @@
 #include "Part1.h"
 
 template <typename T>
-T* createArray(const size_t size)
+T* ArrayFactory::createArray(const size_t size)
 {
     T* arr = new T[size];
 
@@ -10,7 +10,7 @@ T* createArray(const size_t size)
 }
 
 template <typename T>
-void initializeArray(T* arr, const size_t size)
+void ArrayFactory::initializeArray(T* arr, const size_t size)
 {
     for (size_t i = 0; i < size; i++)
     {
@@ -19,19 +19,26 @@ void initializeArray(T* arr, const size_t size)
 }
 
 template <typename T>
-void deleteArray(T* arr, const size_t size)
+void ArrayFactory::deleteArray(T* arr)
 {
     delete[] arr;
+    std::cout << "Successfully deleted array";
 }
 
 int part1_main()
 {
-    size_t size;
-    std::cout << "Enter size of the array: ";
-    std::cin >> size;
+    int size = 0;
 
-    int* arr = createArray<int>(size);
-    initializeArray(arr, size);
+    while(size <= 0)
+    {
+        std::cout << "Enter size of the array: ";
+        std::cin >> size;
+    }
+
+    ArrayFactory array_factory;
+
+    int* arr = array_factory.createArray<int>(size);
+    ArrayFactory::initializeArray(arr, size);
 
     std::cout << "Array after initialization: " << std::endl;
     for (size_t i = 0; i < size; i++)
@@ -39,7 +46,7 @@ int part1_main()
         std::cout << arr[i] << std::endl;
     }
 
-    deleteArray(arr, size);
+    ArrayFactory::deleteArray(arr);
 
     return 0;
 }

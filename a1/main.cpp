@@ -3,9 +3,9 @@
 
 int main()
 {
-    //part1_main();
+    part1_main();
 
-    part2_main();
+    //part2_main();
 
     return 0;
 }

@@ -3,14 +3,18 @@
 
 #include <stddef.h>
 
-template <typename T>
-T* createArray(size_t size);
+class ArrayFactory
+{
+public:
+    template <typename T>
+    T* createArray(size_t size);
 
-template <typename T>
-void initializeArray(T* arr, size_t size);
+    template <typename T>
+    static void initializeArray(T* arr, size_t size);
 
-template <typename T>
-void deleteArray(T* arr, size_t size) ;
+    template <typename T>
+    static void deleteArray(T* arr) ;
+};
 
 int part1_main();
 

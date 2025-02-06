@@ -205,6 +205,7 @@ namespace Part2Geometry {
         return a + b > c + EPSILON && b + c > a + EPSILON && c + a > b + EPSILON;
     }
 }
+
 namespace Part2Driver {
     void Driver::run() {
         Part2Geometry::Triangle triangle(Part2Geometry::Point(0, 0), Part2Geometry::Point(1, 0), Part2Geometry::Point(0, 1));
@@ -247,7 +248,7 @@ namespace Part2Driver {
 // TODO Make better menu system with options to retry
 // TODO Assignment mentions "Driver Class" so maybe make a class for this
 int part2_main() {
-    Triangle t;
+    Part2Geometry::Triangle t;
     int choice;
     do {
         cout << "Menu: \n";
@@ -268,7 +269,7 @@ int part2_main() {
                 cin >> x2 >> y2 >> z2;
                 cout << "Enter coordinates of vertex 3 (x, y, z): ";
                 cin >> x3 >> y3 >> z3;
-                t = Triangle(Point(x1, y1, z1), Point(x2, y2, z2), Point(x3, y3, z3));
+                t = Part2Geometry::Triangle(Part2Geometry::Point(x1, y1, z1), Part2Geometry::Point(x2, y2, z2), Part2Geometry::Point(x3, y3, z3));
                 cout << "Triangle created successfully.\n";
                 break;
             case 1:

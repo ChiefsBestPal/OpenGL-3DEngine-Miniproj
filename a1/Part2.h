@@ -105,8 +105,11 @@ namespace Part2Geometry {
 
 namespace Part2Driver {
     class Driver {
-    public:
-        void run();
+        public:
+            void run();
     };
 }
+
+int part2_main();
+
 #endif // PART2_H
