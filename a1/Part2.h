@@ -7,6 +7,7 @@
 #include <tuple>
 #include <cmath>
 #include <string>
+#include <algorithm>
 namespace Part2Geometry {
     class Point {
     private:
@@ -107,6 +108,7 @@ namespace Part2Driver {
     class Driver {
         public:
             void run();
+            static Part2Geometry::Point getVertexCoordInput(const std::string &vertex_name);
     };
 }
 

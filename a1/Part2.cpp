@@ -193,10 +193,10 @@ namespace Part2Geometry {
         return ss.str();
     }
 
-// Non-member friend function ostream overload for easy printing of Triangle objects
+    // Non-member friend function ostream overload for easy printing of Triangle objects
     ostream &operator<<(ostream &os, const Triangle &tri) { return os << tri.toString(); }
 
-// Utility static Function to check if the points form a valid triangle using inequality theorem
+    // Utility static Function to check if the points form a valid triangle using inequality theorem
     bool Triangle::isValidTrianglePoints(const Point &v1, const Point &v2, const Point &v3) {
         constexpr double EPSILON = 1e-9;
         double a = v1.distanceTo(v2);
@@ -242,11 +242,29 @@ namespace Part2Driver {
             }
         }
     }
+    Part2Geometry::Point Driver::getVertexCoordInput(const string &vertex_name) {
+        int x, y, z;
+        do  {
+            std::cout << "Enter the 3 coordinates comma-seperated for '" << vertex_name << "' (x, y, z): ";
+            string input;
+            getline(cin, input);
+            input.erase(std::remove(input.begin(), input.end(), ' '), input.end());
+
+            stringstream ss(input);
+            char comma;
+            ss >> x >> comma >> y >> comma >> z;
+            if (ss.fail()) {
+                std::cout << "Invalid input. Please try again.\n";
+            } else {
+                break;
+            }
+        } while (true);
+
+        return {x, y, z};
+    }
 }
 
 // Driver code
-// TODO Make better menu system with options to retry
-// TODO Assignment mentions "Driver Class" so maybe make a class for this
 int part2_main() {
     Part2Geometry::Triangle t;
     int choice;
@@ -279,7 +297,9 @@ int part2_main() {
                 int d;
                 char axis;
                 cout << "Enter translation distance (d) and axis (x, y, z): ";
-                cin >> d >> axis;
+                cin >> d;
+                cout << "Enter the translation axis (x, y or z): ";
+                cin >> axis;
                 t.translate(d, axis);
                 break;
             case 3:
