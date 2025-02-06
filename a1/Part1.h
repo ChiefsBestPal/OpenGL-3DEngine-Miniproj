@@ -1,3 +1,9 @@
+/*
+ * Authors: Antoine Cantin 40211205
+ *          Etienne Plante 40236785
+ * Assignment: COMP371 Assignment 1
+ * Date: February 2025
+ */
 #ifndef PART1_H
 #define PART1_H
 

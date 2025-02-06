@@ -1,3 +1,8 @@
+# Authors: Antoine Cantin 40211205
+#          Etienne Plante 40236785
+# Assignment: COMP371 Assignment 1
+# Date: February 2025
+
 cmake_minimum_required(VERSION 3.29)
 project(a1)
 

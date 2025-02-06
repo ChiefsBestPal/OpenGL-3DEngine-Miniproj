@@ -1,3 +1,9 @@
+/*
+ * Authors: Antoine Cantin 40211205
+ *          Etienne Plante 40236785
+ * Assignment: COMP371 Assignment 1
+ * Date: February 2025
+ */
 #include "Part2.h"
 
 using namespace std;
@@ -189,7 +195,7 @@ namespace Part2Geometry {
 // Display function to show triangle coordinates
     string Triangle::toString() const {
         stringstream ss;
-        cout << *vertex_1 << endl;
+        cout << "TESTING POINT DISPLAY FUNC: " <<  *vertex_1 << endl;
         ss << "Triangle: {\n  Vertex1: (" << vertex_1->getX() << "," << vertex_1->getY() << "," << vertex_1->getZ()
            << ")\n"
            << "  Vertex2: (" << vertex_2->getX() << "," << vertex_2->getY() << "," << vertex_2->getZ() << ")\n"
