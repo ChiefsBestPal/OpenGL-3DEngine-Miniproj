@@ -16,7 +16,8 @@ namespace Part2Geometry {
     public:
         // Constructor
         Point(int x = 0, int y = 0, int z = 0);
-
+        // Copy constructor
+        Point(const Point &other);
         // Destructor
         ~Point();
 
@@ -83,7 +84,7 @@ namespace Part2Geometry {
         Triangle *clone() const;
 
         // Getters and Setters for vertices
-        Point *getVertex(int index) const;
+        Point getVertex(int index) const;
 
         void setVertex(int index, const Point &v);
 
@@ -101,17 +102,18 @@ namespace Part2Geometry {
 
         // Utility function to check for a valid triangle
         static bool isValidTrianglePoints(const Point &v1, const Point &v2, const Point &v3);
+
+        // Safety function to check if the vertices are valid pointers
+        bool areVerticesValidPointers() const;
     };
 }
 
 namespace Part2Driver {
-    class Driver {
+     class Driver {
         public:
-            void run();
+            static void run();
             static Part2Geometry::Point getVertexCoordInput(const std::string &vertex_name);
     };
 }
-
-int part2_main();
 
 #endif // PART2_H

@@ -7,9 +7,12 @@ namespace Part2Geometry {
 
 // Constructor
     Point::Point(int x, int y, int z) : x(x), y(y), z(z) {}
-
+// Copy constructor
+    Point::Point(const Point &other) : x(other.x), y(other.y), z(other.z) {}
 // Destructor (default, as no dynamic memory needs to be freed from heap)
-    Point::~Point() {}
+    Point::~Point() = default;
+
+
 
 // Getters
     int Point::getX() const { return x; }
@@ -39,7 +42,7 @@ namespace Part2Geometry {
 // Display function to show point coordinates
     string Point::toString() const {
         stringstream ss;
-        ss << "Point(" << x << "," << y << "," << z << ")";
+        ss << "Point(" << this->x << "," << this->y << "," << this->z << ")";
         return ss.str();
     }
 
@@ -93,7 +96,7 @@ namespace Part2Geometry {
 //    }
 
 // Clone function to create a deep copy of the triangle
-    Triangle *Triangle::clone() const {
+    Triangle* Triangle::clone() const {
         return new Triangle(*vertex_1, *vertex_2, *vertex_3);
     }
 
@@ -111,16 +114,16 @@ namespace Part2Geometry {
     }
 
 // Getter (Use point index for less verbosity)
-    Point *Triangle::getVertex(int index) const {
+    Point Triangle::getVertex(int index) const {
         switch (index) {
             case 1:
-                return vertex_1;
+                return *vertex_1;
             case 2:
-                return vertex_2;
+                return *vertex_2;
             case 3:
-                return vertex_3;
+                return *vertex_3;
             default:
-                return nullptr;
+                throw invalid_argument("Invalid vertex index.");
         }
     }
 
@@ -186,6 +189,7 @@ namespace Part2Geometry {
 // Display function to show triangle coordinates
     string Triangle::toString() const {
         stringstream ss;
+        cout << *vertex_1 << endl;
         ss << "Triangle: {\n  Vertex1: (" << vertex_1->getX() << "," << vertex_1->getY() << "," << vertex_1->getZ()
            << ")\n"
            << "  Vertex2: (" << vertex_2->getX() << "," << vertex_2->getY() << "," << vertex_2->getZ() << ")\n"
@@ -204,115 +208,90 @@ namespace Part2Geometry {
         double c = v3.distanceTo(v1);
         return a + b > c + EPSILON && b + c > a + EPSILON && c + a > b + EPSILON;
     }
+    bool Triangle::areVerticesValidPointers() const {
+        return vertex_1 && vertex_2 && vertex_3;
+    }
+
 }
 
 namespace Part2Driver {
+
+    // Static main driver function for triangle menu
     void Driver::run() {
-        Part2Geometry::Triangle triangle(Part2Geometry::Point(0, 0), Part2Geometry::Point(1, 0), Part2Geometry::Point(0, 1));
-        bool exit = false;
+        Part2Geometry::Triangle t = Part2Geometry::Triangle();
+        int choice;
+        do {
+            if (!t.areVerticesValidPointers()) {
+                cout << "Triangle needs to be created.\n";
+                choice = 0;
+            }else {
+                cout << "Menu: \n";
+                cout << "0. Create Triangle\n";
+                cout << "1. Display Triangle Coordinates\n";
+                cout << "2. Translate Triangle\n";
+                cout << "3. Calculate Triangle Area\n";
+                cout << "4. Exit\n";
+                cout << "Enter your choice: ";
+                cin >> choice;
+            }
+            //cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear input buffer
+            switch(choice) {
+                case 0:
 
-        while (!exit) {
-            std::cout << "\n--- Triangle Operations ---\n";
-            std::cout << "1. Display triangle coordinates\n";
-            std::cout << "2. Translate triangle\n";
-            std::cout << "3. Exit\n";
-            std::cout << "Choose an option: ";
-            int choice;
-            std::cin >> choice;
-
-            switch (choice) {
-                case 1: {
-                    std::cout << triangle.toString() << std::endl;
+                    t = Part2Geometry::Triangle(
+                            Driver::getVertexCoordInput("Vertex 1"),
+                            Driver::getVertexCoordInput("Vertex 2"),
+                            Driver::getVertexCoordInput("Vertex 3"));
+                    cout << "\rTriangle created successfully.\n";
                     break;
-                }
-                case 2: {
-                    float dx, dy;
-                    std::cout << "Enter translation distance for x and y: ";
-                    std::cin >> dx >> dy;
-                    triangle.translate(dx, dy);
-                    std::cout << "Triangle translated by (" << dx << ", " << dy << ")\n";
+                case 1:
+                    cout << t << endl;
                     break;
-                }
+                case 2:
+                    int d;
+                    char axis;
+                    cout << "Enter translation distance (d): ";
+                    cin >> d;
+                    cout << "Enter the translation axis (x, y or z): ";
+                    cin >> axis;
+                    t.translate(d, axis);
+                    cout << "Triangle translated successfully by " << d << " units along the " << axis << " axis" << endl;
+                    break;
                 case 3:
-                    exit = true;
+                    cout << "Area of the triangle: " << t.calcArea() << endl;
                     break;
+                case 4:
+                    cout << "Exiting menu...\n";
+                    return;
                 default:
-                    std::cout << "Invalid option. Please try again.\n";
+                    cout << "Invalid choice! Try again.\n";
                     break;
             }
-        }
+        } while(true);
     }
+
+    // Static utility function to get vertex coordinates from user input for a single Part2Geometry::Point object
     Part2Geometry::Point Driver::getVertexCoordInput(const string &vertex_name) {
         int x, y, z;
         do  {
-            std::cout << "Enter the 3 coordinates comma-seperated for '" << vertex_name << "' (x, y, z): ";
+            std::cout << "\rEnter the 3 coordinates comma-seperated for '" << vertex_name << "' (x, y, z): ";
             string input;
-            getline(cin, input);
+            getline(cin >> std::ws, input);
             input.erase(std::remove(input.begin(), input.end(), ' '), input.end());
 
             stringstream ss(input);
-            char comma;
-            ss >> x >> comma >> y >> comma >> z;
-            if (ss.fail()) {
+//            string token;
+//            getline(ss, token, ',') >> x;
+//            getline(ss, token, ',') >> y;
+//            getline(ss, token, ',') >> z;
+            char comma1, comma2;
+            ss >> x >> comma1 >> y >> comma2 >> z;
+            if (ss.fail() || comma1 != ',' || comma2 != ',') {
                 std::cout << "Invalid input. Please try again.\n";
             } else {
                 break;
             }
         } while (true);
-
         return {x, y, z};
     }
-}
-
-// Driver code
-int part2_main() {
-    Part2Geometry::Triangle t;
-    int choice;
-    do {
-        cout << "Menu: \n";
-        cout << "0. Create Triangle\n";
-        cout << "1. Display Triangle Coordinates\n";
-        cout << "2. Translate Triangle\n";
-        cout << "3. Calculate Triangle Area\n";
-        cout << "4. Exit\n";
-        cout << "Enter your choice: ";
-        cin >> choice;
-
-        switch(choice) {
-            case 0:
-                int x1, y1, z1, x2, y2, z2, x3, y3, z3;
-                cout << "Enter coordinates of vertex 1 (x, y, z): ";
-                cin >> x1 >> y1 >> z1;
-                cout << "Enter coordinates of vertex 2 (x, y, z): ";
-                cin >> x2 >> y2 >> z2;
-                cout << "Enter coordinates of vertex 3 (x, y, z): ";
-                cin >> x3 >> y3 >> z3;
-                t = Part2Geometry::Triangle(Part2Geometry::Point(x1, y1, z1), Part2Geometry::Point(x2, y2, z2), Part2Geometry::Point(x3, y3, z3));
-                cout << "Triangle created successfully.\n";
-                break;
-            case 1:
-                cout << t << endl;
-                break;
-            case 2:
-                int d;
-                char axis;
-                cout << "Enter translation distance (d) and axis (x, y, z): ";
-                cin >> d;
-                cout << "Enter the translation axis (x, y or z): ";
-                cin >> axis;
-                t.translate(d, axis);
-                break;
-            case 3:
-                cout << "Area of the triangle: " << t.calcArea() << endl;
-                break;
-            case 4:
-                cout << "Exiting...\n";
-                return 0;
-            default:
-                cout << "Invalid choice! Try again.\n";
-                break;
-        }
-    } while(true);
-
-    return 0;
 }
