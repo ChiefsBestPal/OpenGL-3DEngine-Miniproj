@@ -92,6 +92,27 @@ namespace Part2Geometry {
         vertex_3 = new Point(v3);
     }
 
+    Triangle::Triangle(const Triangle& other) {
+        vertex_1 = new Point(*other.vertex_1);
+        vertex_2 = new Point(*other.vertex_2);
+        vertex_3 = new Point(*other.vertex_3);
+    }
+
+    Triangle& Triangle::operator=(const Triangle& other) {
+        if (this != &other) {
+            // Free existing points
+            delete vertex_1;
+            delete vertex_2;
+            delete vertex_3;
+
+            // Deep copy new points
+            vertex_1 = new Point(*other.vertex_1);
+            vertex_2 = new Point(*other.vertex_2);
+            vertex_3 = new Point(*other.vertex_3);
+        }
+        return *this;
+    }
+
 // Default constructor, setting pointers to null
     Triangle::Triangle() : vertex_1(nullptr), vertex_2(nullptr), vertex_3(nullptr) {}
 
@@ -243,7 +264,6 @@ namespace Part2Driver {
             //cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear input buffer
             switch(choice) {
                 case 0:
-
                     t = Part2Geometry::Triangle(
                             Driver::getVertexCoordInput("Vertex 1"),
                             Driver::getVertexCoordInput("Vertex 2"),

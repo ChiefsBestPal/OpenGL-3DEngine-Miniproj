@@ -16,7 +16,6 @@
 #include <algorithm>
 namespace Part2Geometry {
     class Point {
-    private:
         int x, y, z;
 
     public:
@@ -65,7 +64,6 @@ namespace Part2Geometry {
     };
 
     class Triangle {
-    private:
         Point *vertex_1;
         Point *vertex_2;
         Point *vertex_3;
@@ -79,8 +77,7 @@ namespace Part2Geometry {
         // Prevent Copy constructor
         // Each Triangle is a uniquely labeled mesh in 3D space
         // (In favor of move semantics or deep copy clone)
-        Triangle(const Triangle &) = delete;
-        // Move ptr assignment constructor if need remove: Triangle& operator=(const Triangle&) = delete;
+        Triangle(const Triangle &);
 
 
         // Destructor
@@ -111,6 +108,8 @@ namespace Part2Geometry {
 
         // Safety function to check if the vertices are valid pointers
         bool areVerticesValidPointers() const;
+
+        Triangle& operator=(const Triangle& other);
     };
 }
 

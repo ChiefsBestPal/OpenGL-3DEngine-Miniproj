@@ -9,7 +9,6 @@
 
 int main()
 {
-
     std::cout << "Part 1" << std::endl;
     part1_main();
 
