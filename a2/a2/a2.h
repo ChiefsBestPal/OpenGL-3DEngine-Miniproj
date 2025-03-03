@@ -10,38 +10,69 @@
 const unsigned int WIDTH = 1280;
 const unsigned int HEIGHT = 720;
 
-// Constants for transformations - further reduced speeds for slower animation
-const float TRANSLATION_DISTANCE = 0.005f;  // Reduced for slower movement
-const float ROTATION_ANGLE = 1.0f;          // Reduced for slower rotation 
-const float SCALE_FACTOR = 1.01f;           // Reduced for slower scaling
+// Constants for transformations - fine-tuned for smooth movement
+const float TRANSLATION_DISTANCE = 0.005f;
+const float ROTATION_ANGLE = 1.0f;
+const float SCALE_FACTOR = 1.005f;
 
 // Time-based control - only apply transformation after this many seconds
-const float KEY_REPEAT_DELAY = 0.05f;       // Add delay between transformation applications
+const float KEY_REPEAT_DELAY = 0.05f;
 
-// Vertex shader with transformation support
+// Enhanced vertex shader with lighting effects
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "layout (location = 1) in vec3 aColor;\n"
+"layout (location = 2) in vec3 aNormal;\n"
+"out vec3 FragPos;\n"
+"out vec3 Normal;\n"
 "out vec3 ourColor;\n"
-"uniform mat4 transform;\n"
+"uniform mat4 model;\n"
+"uniform mat4 view;\n"
+"uniform mat4 projection;\n"
 "void main()\n"
 "{\n"
-"   gl_Position = transform * vec4(aPos, 1.0);\n"
+"   FragPos = vec3(model * vec4(aPos, 1.0));\n"
+"   Normal = mat3(transpose(inverse(model))) * aNormal;\n"
 "   ourColor = aColor;\n"
+"   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
 "}\0";
 
-// Fragment shader that receives color from vertex shader
+// Enhanced fragment shader with lighting calculations
 const char* fragmentShaderSource = "#version 330 core\n"
+"in vec3 FragPos;\n"
+"in vec3 Normal;\n"
 "in vec3 ourColor;\n"
 "out vec4 FragColor;\n"
+"uniform vec3 lightPos;\n"
+"uniform vec3 viewPos;\n"
+"uniform vec3 lightColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(ourColor, 1.0f);\n"
+"   // Ambient lighting\n"
+"   float ambientStrength = 0.3;\n"
+"   vec3 ambient = ambientStrength * lightColor;\n"
+"   \n"
+"   // Diffuse lighting\n"
+"   vec3 norm = normalize(Normal);\n"
+"   vec3 lightDir = normalize(lightPos - FragPos);\n"
+"   float diff = max(dot(norm, lightDir), 0.0);\n"
+"   vec3 diffuse = diff * lightColor;\n"
+"   \n"
+"   // Specular lighting\n"
+"   float specularStrength = 0.5;\n"
+"   vec3 viewDir = normalize(viewPos - FragPos);\n"
+"   vec3 reflectDir = reflect(-lightDir, norm);\n"
+"   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"
+"   vec3 specular = specularStrength * spec * lightColor;\n"
+"   \n"
+"   // Combine results\n"
+"   vec3 result = (ambient + diffuse + specular) * ourColor;\n"
+"   FragColor = vec4(result, 1.0);\n"
 "}\n\0";
 
 // Function declarations
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window, glm::mat4& transform, float deltaTime);
+void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::vec3& rotationAxis, bool& wireframeMode);
 //#pragma once
 //#include <GL/glew.h>
 //#include <GLFW/glfw3.h>
