@@ -71,7 +71,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Development\c++\comp371-assignments\a2\include\glm;C:\GLFW\include;C:\GLEW\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\antoi\OneDrive\Bureau\comp371-assignments\a2\include\glm;C:\Development\c++\comp371-assignments\a2\include\glm;C:\GLFW\include;C:\GLEW\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\GLFW\lib-vc2019;C:\GLEW\lib\Release\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
