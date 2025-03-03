@@ -7,18 +7,20 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Window dimensions
+// Used for framebuffer size callback and aspect ratio calculations
 const unsigned int WIDTH = 1280;
 const unsigned int HEIGHT = 720;
 
-// Constants for transformations - fine-tuned for smooth movement
-const float TRANSLATION_DISTANCE = 0.005f;
+// Constants for transformations - tuned for smooth draw updates based on geometric transformation at play
+const float TRANSLATION_DISTANCE = 0.001f;
 const float ROTATION_ANGLE = 1.0f;
-const float SCALE_FACTOR = 1.005f;
+const float SCALE_FACTOR = 1.003f;
 
-// Time-based control - only apply transformation after this many seconds
-const float KEY_REPEAT_DELAY = 0.05f;
+// Time-safety-control control - provides time to register key inputs for proper visualization of transformations
+const float KEY_REPEAT_DELAY = 0.5f;
 
-// Enhanced vertex shader with lighting effects
+// Vertex shader with normal-plane based lighting effects
+// Uses MVP for model->world->view->clip space transformations
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "layout (location = 1) in vec3 aColor;\n"
@@ -37,7 +39,12 @@ const char* vertexShaderSource = "#version 330 core\n"
 "   gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
 "}\0";
 
-// Enhanced fragment shader with lighting calculations
+// Fragment shader with normal-plane based lighting calculations
+// Used to determine in a scene potential final rasterized pixel colors
+// In view, 
+// ambient lighting is a constant light that affects all objects in the scene as perceived e.g. moonlight
+// specular lighting is calculated based on the reflection of light rays off the surface e.g. shiny objects with singular shiny/reflective highlighted spot
+// diffuse lighting is calculated based on the angle between the normal vector and the light vector e.g. matte objects, light is scattered in all directions towards the viewer, uniform shadow
 const char* fragmentShaderSource = "#version 330 core\n"
 "in vec3 FragPos;\n"
 "in vec3 Normal;\n"
@@ -70,9 +77,13 @@ const char* fragmentShaderSource = "#version 330 core\n"
 "   FragColor = vec4(result, 1.0);\n"
 "}\n\0";
 
-// Function declarations
+// Function Prototypes declarations
+
+// Callback for a window resize GLFW event
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+// Process keyboard input for transformations
 void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::vec3& rotationAxis, bool& wireframeMode);
+
 //#pragma once
 //#include <GL/glew.h>
 //#include <GLFW/glfw3.h>
