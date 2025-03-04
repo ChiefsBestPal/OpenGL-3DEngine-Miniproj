@@ -12,7 +12,7 @@ const unsigned int WIDTH = 1280;
 const unsigned int HEIGHT = 720;
 
 // Constants for transformations - tuned for smooth draw updates based on geometric transformation at play
-const float TRANSLATION_DISTANCE = 0.001f;
+const float TRANSLATION_DISTANCE = 0.01f;
 const float ROTATION_ANGLE = 1.0f;
 const float SCALE_FACTOR = 1.003f;
 

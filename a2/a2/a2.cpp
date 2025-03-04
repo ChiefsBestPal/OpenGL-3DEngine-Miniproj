@@ -13,6 +13,8 @@ ScalingDirection currentScalingDir = SCALE_Z;
 // Timing for key input
 float lastKeyPressTime = 0.0f;
 
+bool canRotateClockwise = true, canRotateCounterclockwise = true;
+
 // Callback function for window resize
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -44,103 +46,34 @@ void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::ve
         model = glm::translate(model, glm::vec3(TRANSLATION_DISTANCE, 0.0f, 0.0f));  // Move right
     }
 
-    // Rotation controls
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+   
+    // Rotation controls, once per keypress
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && canRotateCounterclockwise) {
         // Rotate counterclockwise around current axis
-        model = glm::rotate(model, glm::radians(ROTATION_ANGLE * deltaTime * 50.0f), rotationAxis);
+        model = glm::rotate(model, glm::degrees(ROTATION_ANGLE), rotationAxis);
+        canRotateCounterclockwise = false;
     }
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && canRotateClockwise) {
         // Rotate clockwise around current axis
-        model = glm::rotate(model, glm::radians(-ROTATION_ANGLE * deltaTime * 50.0f), rotationAxis);
+        model = glm::rotate(model, glm::degrees(-ROTATION_ANGLE), rotationAxis);
+        canRotateClockwise = false;
+    }
+    // Reset rotation controls
+    if (glfwGetKey(window, GLFW_KEY_Q) != GLFW_PRESS) {
+        canRotateCounterclockwise = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) != GLFW_PRESS) {
+        canRotateClockwise = true;
     }
 
     // Scaling controls
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-        // Scale up based on current scaling direction
-        switch (currentScalingDir) {
-        case SCALE_X:
-            model = glm::scale(model, glm::vec3(SCALE_FACTOR, 1.0f, 1.0f));
-            break;
-        case SCALE_Y:
-            model = glm::scale(model, glm::vec3(1.0f, SCALE_FACTOR, 1.0f));
-            break;
-        case SCALE_Z:
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f, SCALE_FACTOR));
-            break;
-        case SCALE_UNIFORM:
-            model = glm::scale(model, glm::vec3(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR));
-            break;
-        }
+        // Scale up based in z axis
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, SCALE_FACTOR));
     }
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-        // Scale down based on current scaling direction
-        switch (currentScalingDir) {
-        case SCALE_X:
-            model = glm::scale(model, glm::vec3(1.0f / SCALE_FACTOR, 1.0f, 1.0f));
-            break;
-        case SCALE_Y:
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f / SCALE_FACTOR, 1.0f));
-            break;
-        case SCALE_Z:
-            model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f / SCALE_FACTOR));
-            break;
-        case SCALE_UNIFORM:
-            model = glm::scale(model, glm::vec3(1.0f / SCALE_FACTOR, 1.0f / SCALE_FACTOR, 1.0f / SCALE_FACTOR));
-            break;
-        }
-    }
-
-    // Toggle wireframe mode
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS && canProcessKey) {
-        wireframeMode = !wireframeMode;
-        lastKeyPressTime = currentTime;
-    }
-
-    // Switch rotation axis
-    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS && canProcessKey) {
-        // Cycle through rotation axes: X -> Y -> Z -> X
-        switch (currentRotationAxis) {
-        case ROT_X:
-            currentRotationAxis = ROT_Y;
-            rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f); // Y-axis
-            std::cout << "Rotation axis: Y" << std::endl;
-            break;
-        case ROT_Y:
-            currentRotationAxis = ROT_Z;
-            rotationAxis = glm::vec3(0.0f, 0.0f, 1.0f); // Z-axis
-            std::cout << "Rotation axis: Z" << std::endl;
-            break;
-        case ROT_Z:
-            currentRotationAxis = ROT_X;
-            rotationAxis = glm::vec3(1.0f, 0.0f, 0.0f); // X-axis
-            std::cout << "Rotation axis: X" << std::endl;
-            break;
-        }
-        lastKeyPressTime = currentTime;
-    }
-
-    // Switch scaling direction
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS && canProcessKey) {
-        // Cycle through scaling directions: X -> Y -> Z -> Uniform -> X
-        switch (currentScalingDir) {
-        case SCALE_X:
-            currentScalingDir = SCALE_Y;
-            std::cout << "Scaling direction: Y" << std::endl;
-            break;
-        case SCALE_Y:
-            currentScalingDir = SCALE_Z;
-            std::cout << "Scaling direction: Z" << std::endl;
-            break;
-        case SCALE_Z:
-            currentScalingDir = SCALE_UNIFORM;
-            std::cout << "Scaling direction: Uniform" << std::endl;
-            break;
-        case SCALE_UNIFORM:
-            currentScalingDir = SCALE_X;
-            std::cout << "Scaling direction: X" << std::endl;
-            break;
-        }
-        lastKeyPressTime = currentTime;
+        // Scale down in the z axis
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f / SCALE_FACTOR));
     }
 
     // Reset model matrix to identity
@@ -185,11 +118,8 @@ int main() {
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "Controls:" << std::endl;
     std::cout << "  W/S/A/D - Move up/down/left/right" << std::endl;
-    std::cout << "  Q/E - Rotate around current axis" << std::endl;
-    std::cout << "  R/F - Scale in current direction" << std::endl;
-    std::cout << "  X - Switch rotation axis (X, Y, Z)" << std::endl;
-    std::cout << "  C - Switch scaling direction (X, Y, Z, Uniform)" << std::endl;
-    std::cout << "  T - Toggle wireframe mode" << std::endl;
+    std::cout << "  Q/E - Rotate around Z axis by 30 degrees" << std::endl;
+    std::cout << "  R/F - Scale in the Z axis" << std::endl;
     std::cout << "  Space - Reset to initial position" << std::endl;
     std::cout << "  Esc - Exit" << std::endl;
 
