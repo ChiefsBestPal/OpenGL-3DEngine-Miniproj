@@ -1,0 +1,36 @@
+
+# Make sure github linguist considers actually relevant source files
+include/glm/* linguist-vendored
+*.html linguist-vendored
+*.htm linguist-vendored
+*.js linguist-vendored
+*.md linguist-documentation
+
+# Ensure unix standard cross platform line endings (convert back to LF always)
+*.cpp text eol=lf
+*.h text eol=lf
+*.glsl text eol=lf
+*.vert text eol=lf
+*.frag text eol=lf
+
+# Prevent Merging for User-Specific VS IDE settings file
+*.vcxproj.user merge=ours
+
+# Identify OpenGL Shading Language files for github language detect
+*.glsl linguist-language=GLSL
+*.vert linguist-language=GLSL
+*.frag linguist-language=GLSL
+
+# Ignore raw binary diff for pdf files
+*.pdf binary
+
+# Ignore Debug, Build, and Binary Files in Git Diffs
+*.exe binary
+*.dll binary
+*.lib binary
+*.a binary
+*.o binary
+*.obj binary
+*.pdb binary
+x64/Debug/** binary
+
