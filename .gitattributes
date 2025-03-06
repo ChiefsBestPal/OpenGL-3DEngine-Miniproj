@@ -1,6 +1,9 @@
 
 # Make sure github linguist considers actually relevant source files
-include/glm/* linguist-vendored
+include/glm/** linguist-vendored
+external/** linguist-vendored
+third_party/** linguist-vendored
+dependencies/** linguist-vendored
 *.html linguist-vendored
 *.htm linguist-vendored
 *.js linguist-vendored
@@ -20,6 +23,9 @@ include/glm/* linguist-vendored
 *.glsl linguist-language=GLSL
 *.vert linguist-language=GLSL
 *.frag linguist-language=GLSL
+
+*.cpp linguist-language=C++
+*.h linguist-language=C++
 
 # Ignore raw binary diff for pdf files
 *.pdf binary
