@@ -1,7 +1,9 @@
+#define TINYOBJLOADER_IMPLEMENTATION
 #include <iostream>
 #include <vector>
 #include <string>
 #include "a2.h"
+#include "tiny_obj_loader.h"
 
 // Global variables to track control state
 enum RotationAxis { ROT_X, ROT_Y, ROT_Z };
@@ -10,55 +12,113 @@ RotationAxis currentRotationAxis = ROT_Z;
 enum ScalingDirection { SCALE_X, SCALE_Y, SCALE_Z, SCALE_UNIFORM };
 ScalingDirection currentScalingDir = SCALE_Z;
 
-// Timing for key input
 float lastKeyPressTime = 0.0f;
-
 bool canRotateClockwise = true, canRotateCounterclockwise = true;
 
-// Callback function for window resize
+std::vector<Vertex> loadModel(const std::string& path) {
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str())) {
+        std::cerr << "Failed to load: " << err << std::endl;
+        return std::vector<Vertex>();
+    }
+
+    std::vector<Vertex> vertices;
+    
+    // Loop over shapes
+    for (const auto& shape : shapes) {
+        // Loop over faces
+        size_t index_offset = 0;
+        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
+            int fv = shape.mesh.num_face_vertices[f];
+            
+            // Loop over vertices in the face
+            for (size_t v = 0; v < fv; v++) {
+                tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
+                
+                Vertex vertex;
+                
+                // Position
+                vertex.position = {
+                    attrib.vertices[3 * idx.vertex_index + 0],
+                    attrib.vertices[3 * idx.vertex_index + 1],
+                    attrib.vertices[3 * idx.vertex_index + 2]
+                };
+                
+                // Normal
+                if (idx.normal_index >= 0) {
+                    vertex.normal = {
+                        attrib.normals[3 * idx.normal_index + 0],
+                        attrib.normals[3 * idx.normal_index + 1],
+                        attrib.normals[3 * idx.normal_index + 2]
+                    };
+                } else {
+                    vertex.normal = {0.0f, 0.0f, 0.0f};
+                }
+                
+                // Color (use a default color if not specified)
+                if (idx.texcoord_index >= 0 && attrib.texcoords.size() > 0) {
+                    // Use texture coordinate to generate color
+                    vertex.color = {
+                        attrib.texcoords[2 * idx.texcoord_index + 0],
+                        attrib.texcoords[2 * idx.texcoord_index + 1],
+                        0.5f  // Default blue component
+                    };
+                } else {
+                    // Default color (white)
+                    vertex.color = {1.0f, 1.0f, 1.0f};
+                }
+                
+                vertices.push_back(vertex);
+            }
+            index_offset += fv;
+        }
+    }
+
+    std::cout << "Successfully loaded: " << path << std::endl;
+    std::cout << "Loaded " << vertices.size() << " vertices" << std::endl;
+    
+    return vertices;
+}
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-// Function to process keyboard input
 void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::vec3& rotationAxis, bool& wireframeMode) {
     float currentTime = glfwGetTime();
-
-    // Check if enough time has passed since last key press
     bool canProcessKey = (currentTime - lastKeyPressTime) > KEY_REPEAT_DELAY;
 
-    // Exit application
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    // Translation controls - continuous movement
+    // Translation controls
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        model = glm::translate(model, glm::vec3(0.0f, TRANSLATION_DISTANCE, 0.0f));  // Move up
+        model = glm::translate(model, glm::vec3(0.0f, TRANSLATION_DISTANCE, 0.0f));
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        model = glm::translate(model, glm::vec3(0.0f, -TRANSLATION_DISTANCE, 0.0f)); // Move down
+        model = glm::translate(model, glm::vec3(0.0f, -TRANSLATION_DISTANCE, 0.0f));
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        model = glm::translate(model, glm::vec3(-TRANSLATION_DISTANCE, 0.0f, 0.0f)); // Move left
+        model = glm::translate(model, glm::vec3(-TRANSLATION_DISTANCE, 0.0f, 0.0f));
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        model = glm::translate(model, glm::vec3(TRANSLATION_DISTANCE, 0.0f, 0.0f));  // Move right
+        model = glm::translate(model, glm::vec3(TRANSLATION_DISTANCE, 0.0f, 0.0f));
     }
 
-   
-    // Rotation controls, once per keypress
+    // Rotation controls
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && canRotateCounterclockwise) {
-        // Rotate counterclockwise around current axis
-        model = glm::rotate(model, glm::degrees(ROTATION_ANGLE), rotationAxis);
+        model = glm::rotate(model, glm::radians(ROTATION_ANGLE), rotationAxis);
         canRotateCounterclockwise = false;
     }
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && canRotateClockwise) {
-        // Rotate clockwise around current axis
-        model = glm::rotate(model, glm::degrees(-ROTATION_ANGLE), rotationAxis);
+        model = glm::rotate(model, glm::radians(-ROTATION_ANGLE), rotationAxis);
         canRotateClockwise = false;
     }
-    // Reset rotation controls
     if (glfwGetKey(window, GLFW_KEY_Q) != GLFW_PRESS) {
         canRotateCounterclockwise = true;
     }
@@ -68,37 +128,31 @@ void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::ve
 
     // Scaling controls
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-        // Scale up based in z axis
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, SCALE_FACTOR));
     }
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-        // Scale down in the z axis
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f / SCALE_FACTOR));
     }
 
-    // Reset model matrix to identity
+    // Reset model matrix
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && canProcessKey) {
-        model = glm::mat4(1.0f);
+        model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));;
         std::cout << "Reset position, rotation, and scale." << std::endl;
         lastKeyPressTime = currentTime;
     }
 }
 
 int main() {
-    // Step 1: Setting Up Your Environment
-    // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
     
-    // Configure GLFW
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // Create window
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Assignment 2 - Enhanced 3D Pyramid", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Assignment 2 - 3D Model Viewer", NULL, NULL);
     if (window == NULL) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -108,7 +162,6 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    // Initialize GLEW
     GLenum err = glewInit();
     if (GLEW_OK != err) {
         std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
@@ -118,20 +171,16 @@ int main() {
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "Controls:" << std::endl;
     std::cout << "  W/S/A/D - Move up/down/left/right" << std::endl;
-    std::cout << "  Q/E - Rotate around Z axis by 30 degrees" << std::endl;
+    std::cout << "  Q/E - Rotate around Z axis" << std::endl;
     std::cout << "  R/F - Scale in the Z axis" << std::endl;
     std::cout << "  Space - Reset to initial position" << std::endl;
     std::cout << "  Esc - Exit" << std::endl;
 
-    // Step 2: Drawing Basic Shapes
-    // 
-    // Compile vertex shader
-	// Vertex shader processes each vertex of a primitive (point, line, triangle)
+    // Compile shaders
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
-    // Check for vertex shader compile errors
     int success;
     char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
@@ -140,313 +189,128 @@ int main() {
         std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    // Compile fragment shader
-	// fragments are pixel candidates for the final image.
-	// fragment shader runs for each fragment generated by the rasterizer.
-	// GPU Rasterization turns 3D coordinates of a vertex into a 2D image space pixel.
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
-    // Check for fragment shader compile errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success) {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
-    // Link shaders
-	// Linking of the compiled shaders into a complete pipeline for a program object.
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
-    // Check for linking errors
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
-    // Delete individual shaders compiled assemblies since they are linked in shader program of context execution
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    // Define the vertices of a pyramid with positions, colors, and accurate normals for better lighting
-	// the 4 Base vertices as well as multi-positioned apex vertex for different normals / base sides
-    // Position: x, y, z coordinates of vertex
-	// Color: r, g, b % values
-	// Normal: x, y, z of direction vector perpendicular to the supposed surface plane of vertex
-    float pyramid_vertices[] = {
-        // Positions            // Colors               // Normals
-        // Base vertices
-        -0.5f, -0.5f, -0.5f,    0.9f, 0.2f, 0.2f,      0.0f, -1.0f, 0.0f,  // base vertex 0 - red
-         0.5f, -0.5f, -0.5f,    0.2f, 0.9f, 0.2f,      0.0f, -1.0f, 0.0f,  // base vertex 1 - green
-         0.5f, -0.5f,  0.5f,    0.2f, 0.2f, 0.9f,      0.0f, -1.0f, 0.0f,  // base vertex 2 - blue
-        -0.5f, -0.5f,  0.5f,    0.9f, 0.9f, 0.2f,      0.0f, -1.0f, 0.0f,  // base vertex 3 - yellow
+    // Load model
+    std::vector<Vertex> vertices = loadModel("../cube.obj");
+    if (vertices.empty()) {
+        std::cerr << "Failed to load model" << std::endl;
+        return -1;
+    }
 
-        // Apex with different positions for different normals (for proper lighting)
-        0.0f,  0.5f,  0.0f,    0.9f, 0.2f, 0.9f,      0.0f, 0.5f, -0.866f,  // apex for front face
-        0.0f,  0.5f,  0.0f,    0.9f, 0.2f, 0.9f,      0.866f, 0.5f, 0.0f,   // apex for right face
-        0.0f,  0.5f,  0.0f,    0.9f, 0.2f, 0.9f,      0.0f, 0.5f, 0.866f,   // apex for back face
-        0.0f,  0.5f,  0.0f,    0.9f, 0.2f, 0.9f,      -0.866f, 0.5f, 0.0f,  // apex for left face
-    };
+    // Create vertex buffer and array objects
+    unsigned int VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
-    // Indices for the pyramid (each triple is a triangle element )
-    unsigned int indices[] = {
-        // Base (made of 2 triangles)
-        0, 1, 2,    // first triangle of base
-        0, 2, 3,    // second triangle of base
-        // Sides (4 triangles connecting base to apex)
-        0, 1, 4,    // front face
-        1, 2, 5,    // right face
-        2, 3, 6,    // back face
-        3, 0, 7     // left face
-    };
-
-    // Generate and bind VAO, VBO, and EBO
-    unsigned int VAO, VBO, EBO;
-	glGenVertexArrays(1, &VAO); // Vertex Array Object: stores vertex attribute configurations and which VBO to use
-	glGenBuffers(1, &VBO); // Vertex Buffer Object: stores vertex data efficiently in GPU memory
-	glGenBuffers(1, &EBO); // Element Buffer Object: stores indices (or elements/vertex group) that OpenGL uses to decide which vertices to draw
-
-    // Bind VAO first
     glBindVertexArray(VAO);
-
-	// Bind and set VBO; allocate static gpu memory for vertices
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(pyramid_vertices), pyramid_vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
-	// Bind and set EBO; allocate static gpu memory for indices
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // Vertex Attribute#0: Position (VAO floats 0,1,2);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    // Position attribute
     glEnableVertexAttribArray(0);
-
-    // Vertex Attribute#1: Color (VAO floats 3,4,5);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    
+    // Color attribute
     glEnableVertexAttribArray(1);
-
-    // Vertex Attribute#2: Normals (VAO floats 6,7,8);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+    
+    // Normal attribute
     glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
 
-    // Unbind VBO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // Unbind then VAO 
     glBindVertexArray(0);
 
-    // Enable depth testing to properly render 3D objects within context
-	// Z-buffering: a technique used to determine which objects are visible in a scene (Image space) based on their depth from the camera
-	// Z-buffer GL_DEPTH_TEST: compares the depth of each fragment with the depth value stored in the depth buffer...
-    // e.g. further objects should be more obscure when overlayed
     glEnable(GL_DEPTH_TEST);
 
-    // Step 3: Set up camera and projection
-	// Uses MVP (Model, View, Projection) matrices to transform from model space to clip space
-
-	// Model R4: transform objects from model space to world space
-    glm::mat4 model = glm::mat4(1.0f);
-	// View R4: transform world space to camera space
+    // Set up camera and projection
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));;
     glm::mat4 view = glm::lookAt(
-        glm::vec3(0.0f, 0.3f, 2.0f),    // Camera position
-        glm::vec3(0.0f, 0.0f, 0.0f),    // Look at center
-        glm::vec3(0.0f, 1.0f, 0.0f)     // Up vector
+        glm::vec3(0.0f, 0.3f, 2.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f)
     );
-	// Projection R4: transform camera space to clip space
     glm::mat4 projection = glm::perspective(
-		glm::radians(45.0f),          // Field of view
-		(float)WIDTH / (float)HEIGHT, // Aspect ratio
-		0.1f,                         // Near clipping plane
-		100.0f                        // Far clipping plane
+        glm::radians(45.0f),
+        (float)WIDTH / (float)HEIGHT,
+        0.1f,
+        100.0f
     );
 
-    // Current rotation axis (start with Z-axis)
     glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 1.0f);
-
-    // Wireframe mode toggle
     bool wireframeMode = false;
 
-    // For smooth animation, add timing between frames
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    // Initial rotation to make the pyramid clearly visible
-    // TODO: WHAT INITIAL MODEL VIEW SHOULD BE USED?
+    // Initial rotation to make the model visible
     model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-    // Main render loop
     while (!glfwWindowShouldClose(window)) {
-        // Calculate delta time for smooth movement  and
-        // delays to allow time to register inputs for proper visualizations of transforms
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Process input to update transforms
         processInput(window, model, deltaTime, rotationAxis, wireframeMode);
 
-        // Clear screen set to bg color, clear color+ depth buffer using bitflags
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Set polygon mode based on wireframe toggle
-		// Wireframe mode: Only draw the edges of the triangle elements
         if (wireframeMode)
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         else
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		// Use linked shader program (vertex and fragment shaders) as part of current rendering pipeline
         glUseProgram(shaderProgram);
 
-		// Uniforms for lighting effects
-		// Uniforms: Variables from CPU passed to shaders GPU that remain constant for the entire draw call 
         // Set lighting uniforms
-		glm::vec3 lightPos = glm::vec3(1.5f, 1.5f, 1.5f); // Light position in world space
-		glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // White light
-        glm::vec3 viewPos = glm::vec3(0.0f, 0.3f, 2.0f);  // Try Same as camera position
+        glm::vec3 lightPos = glm::vec3(1.5f, 1.5f, 1.5f);
+        glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+        glm::vec3 viewPos = glm::vec3(0.0f, 0.3f, 2.0f);
 
-        // Get uniform lighting locations
-        unsigned int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
-        unsigned int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
-        unsigned int lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
+        glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(lightPos));
+        glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(viewPos));
+        glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1, glm::value_ptr(lightColor));
 
-        // Set uniform lighting values
-		// glUniform3fv: set uniform vec3 value ([lightPos, viewPos, lightColor])
-        glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
-        glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
-        glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
+        // Set transform matrices
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-		// Get transform matrices unfiform locations
-        unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
-        unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
-        unsigned int projectionLoc = glGetUniformLocation(shaderProgram, "projection");
-		// Set Uniform transform matrices values
-		// glUniformMatrix4fv: set uniform mat4 value (transform matrices)
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-        // Bind VAO; then finally Draw
+        // Draw model
         glBindVertexArray(VAO);
-        glDrawElements(
-			GL_TRIANGLES, // Drawing mode: Triangles
-			18, // Number of indices 6 triangles * 3 vertices = 18 (6 rows of 3-index points)
-			GL_UNSIGNED_INT, // Type of indices
-			0 // Offset of EBO i.e. Offset of indices defining triangle elements
-        );
+        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 
-		// Swap buffers front and back buffers
-		// Double buffering: 1 buffer for drawing, 1 buffer for displaying
-        glfwSwapBuffers(window); //TODO: glfwSwapInterval(1)?
-		// Process GLFW window events e.g. keyboard/mouse inputs
+        glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-	// Free pipeline resources
-	// clean up buffers and execution shaders binaries
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
     glDeleteProgram(shaderProgram);
-    //Terminate GLFW library processes
     glfwTerminate();
     return 0;
 }
-//#include <iostream>
-//#include "a2.h"
-//
-//int main() {
-//	glfwInit();
-//	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-//	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-//	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-//
-//	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Assignment 2", NULL, NULL);
-//	glfwMakeContextCurrent(window);
-//	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-//
-//	GLenum err = glewInit();
-//	if (GLEW_OK != err) {
-//		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-//	}
-//
-//    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-//    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-//    glCompileShader(vertexShader);
-//
-//    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-//    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-//    glCompileShader(fragmentShader);
-//
-//    unsigned int shaderProgram = glCreateProgram();
-//    glAttachShader(shaderProgram, vertexShader);
-//    glAttachShader(shaderProgram, fragmentShader);
-//    glLinkProgram(shaderProgram);
-//
-//    glDeleteShader(vertexShader);
-//    glDeleteShader(fragmentShader);
-//
-//    float triangle_verices[] = {
-//        -0.5f, -0.5f, 0.0f, // left  
-//         0.5f, -0.5f, 0.0f, // right 
-//         0.0f,  0.5f, 0.0f  // top   
-//    };
-//
-//    unsigned int VBO, VAO;
-//    glGenVertexArrays(1, &VAO);
-//    glGenBuffers(1, &VBO);
-//    glBindVertexArray(VAO);
-//
-//    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_verices), triangle_verices, GL_STATIC_DRAW);
-//
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-//    glEnableVertexAttribArray(0);
-//
-//    glBindBuffer(GL_ARRAY_BUFFER, 0);
-//
-//    glBindVertexArray(0);
-//
-//    // render loop
-//    // -----------
-//    while (!glfwWindowShouldClose(window))
-//    {
-//        // input
-//        // -----
-//        processInput(window);
-//
-//        // render
-//        // ------
-//        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-//        glClear(GL_COLOR_BUFFER_BIT);
-//
-//        glUseProgram(shaderProgram);
-//        glBindVertexArray(VAO);
-//        glDrawArrays(GL_TRIANGLES, 0, 3);
-//
-//        glfwSwapBuffers(window);
-//        glfwPollEvents();
-//    }
-//
-//    glDeleteVertexArrays(1, &VAO);
-//    glDeleteBuffers(1, &VBO);
-//    glDeleteProgram(shaderProgram);
-//
-//    glfwTerminate();
-//    return 0;
-//}
-//
-//void processInput(GLFWwindow* window) {
-//	//Keyboard input stuff here for step 4
-//	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-//		glfwSetWindowShouldClose(window, true);
-//}
-//
-//void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-//	glViewport(0, 0, width, height);
-//}
