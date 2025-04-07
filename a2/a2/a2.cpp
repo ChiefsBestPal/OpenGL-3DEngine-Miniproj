@@ -122,11 +122,17 @@ void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::ve
 
     // Rotation controls
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS && canRotateCounterclockwise) {
+        glm::vec3 translation = glm::vec3(model[3]);
+        model[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         model = glm::rotate(model, glm::radians(ROTATION_ANGLE), rotationAxis);
+        model[3] = glm::vec4(translation, 1.0f);
         canRotateCounterclockwise = false;
     }
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && canRotateClockwise) {
+        glm::vec3 translation = glm::vec3(model[3]);
+        model[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
         model = glm::rotate(model, glm::radians(-ROTATION_ANGLE), rotationAxis);
+        model[3] = glm::vec4(translation, 1.0f);
         canRotateClockwise = false;
     }
     if (glfwGetKey(window, GLFW_KEY_Q) != GLFW_PRESS) {
@@ -258,7 +264,7 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     // Set up camera and projection
-    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
     glm::mat4 view = glm::lookAt(
         glm::vec3(0.0f, 0.3f, 4.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -276,11 +282,9 @@ int main() {
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
-    // Initial rotation to make the model visible
-    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-    // Move it down
-    model = glm::translate(model, glm::vec3(0.0f, -12.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.2f)); // Scale down first
+    model = glm::translate(model, glm::vec3(0.0f, -12.0f, 0.0f)); // Then move down
+    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Initial rotation
 
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();
