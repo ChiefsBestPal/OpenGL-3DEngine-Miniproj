@@ -136,7 +136,7 @@ void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::ve
 
     // Reset model matrix
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && canProcessKey) {
-        model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));;
+        model = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));;
         std::cout << "Reset position, rotation, and scale." << std::endl;
         lastKeyPressTime = currentTime;
     }
@@ -214,7 +214,7 @@ int main() {
     glDeleteShader(fragmentShader);
 
     // Load model
-    std::vector<Vertex> vertices = loadModel("../cube.obj");
+    std::vector<Vertex> vertices = loadModel("../cybertruck.obj");
     if (vertices.empty()) {
         std::cerr << "Failed to load model" << std::endl;
         return -1;
@@ -247,7 +247,7 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     // Set up camera and projection
-    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));;
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));;
     glm::mat4 view = glm::lookAt(
         glm::vec3(0.0f, 0.3f, 2.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -260,14 +260,17 @@ int main() {
         100.0f
     );
 
-    glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 1.0f);
+    glm::vec3 rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
     bool wireframeMode = false;
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
     // Initial rotation to make the model visible
-    model = glm::rotate(model, glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::degrees(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // Move it down
+    model = glm::translate(model, glm::vec3(0.0f, -12.0f, 0.0f));
 
     while (!glfwWindowShouldClose(window)) {
         float currentFrame = glfwGetTime();

@@ -1,5 +1,6 @@
 ﻿  a2.cpp
 C:\Development\c++\comp371-assignments\a2\a2\a2.cpp(92,23): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Development\c++\comp371-assignments\a2\a2\a2.cpp(273,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Development\c++\comp371-assignments\a2\a2\a2.cpp(305,52): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Development\c++\comp371-assignments\a2\a2\a2.cpp(276,28): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Development\c++\comp371-assignments\a2\a2\a2.cpp(308,52): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   a2.vcxproj -> C:\Development\c++\comp371-assignments\a2\x64\Debug\a2.exe

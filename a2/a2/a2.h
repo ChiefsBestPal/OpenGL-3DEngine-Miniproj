@@ -13,7 +13,7 @@ const unsigned int HEIGHT = 720;
 
 // Constants for transformations
 const float TRANSLATION_DISTANCE = 0.01f;
-const float ROTATION_ANGLE = 1.0f;
+const float ROTATION_ANGLE = 10.0f;
 const float SCALE_FACTOR = 1.003f;
 const float KEY_REPEAT_DELAY = 0.5f;
 
