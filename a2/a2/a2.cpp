@@ -14,6 +14,7 @@ ScalingDirection currentScalingDir = SCALE_Z;
 
 float lastKeyPressTime = 0.0f;
 bool canRotateClockwise = true, canRotateCounterclockwise = true;
+bool wireframeMode = true; // Wireframe mode by default
 
 std::vector<Vertex> loadModel(const std::string& path) {
     tinyobj::attrib_t attrib;
@@ -27,27 +28,27 @@ std::vector<Vertex> loadModel(const std::string& path) {
     }
 
     std::vector<Vertex> vertices;
-    
+
     // Loop over shapes
     for (const auto& shape : shapes) {
         // Loop over faces
         size_t index_offset = 0;
         for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
             int fv = shape.mesh.num_face_vertices[f];
-            
+
             // Loop over vertices in the face
             for (size_t v = 0; v < fv; v++) {
                 tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
-                
+
                 Vertex vertex;
-                
+
                 // Position
                 vertex.position = {
                     attrib.vertices[3 * idx.vertex_index + 0],
                     attrib.vertices[3 * idx.vertex_index + 1],
                     attrib.vertices[3 * idx.vertex_index + 2]
                 };
-                
+
                 // Normal
                 if (idx.normal_index >= 0) {
                     vertex.normal = {
@@ -55,10 +56,11 @@ std::vector<Vertex> loadModel(const std::string& path) {
                         attrib.normals[3 * idx.normal_index + 1],
                         attrib.normals[3 * idx.normal_index + 2]
                     };
-                } else {
-                    vertex.normal = {0.0f, 0.0f, 0.0f};
                 }
-                
+                else {
+                    vertex.normal = { 0.0f, 0.0f, 0.0f };
+                }
+
                 // Color (use a default color if not specified)
                 if (idx.texcoord_index >= 0 && attrib.texcoords.size() > 0) {
                     // Use texture coordinate to generate color
@@ -67,11 +69,12 @@ std::vector<Vertex> loadModel(const std::string& path) {
                         attrib.texcoords[2 * idx.texcoord_index + 1],
                         0.5f  // Default blue component
                     };
-                } else {
-                    // Default color (white)
-                    vertex.color = {1.0f, 1.0f, 1.0f};
                 }
-                
+                else {
+                    // Default color (white)
+                    vertex.color = { 1.0f, 1.0f, 1.0f };
+                }
+
                 vertices.push_back(vertex);
             }
             index_offset += fv;
@@ -80,7 +83,7 @@ std::vector<Vertex> loadModel(const std::string& path) {
 
     std::cout << "Successfully loaded: " << path << std::endl;
     std::cout << "Loaded " << vertices.size() << " vertices" << std::endl;
-    
+
     return vertices;
 }
 
@@ -94,6 +97,13 @@ void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::ve
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    // Toggle wireframe mode with Tab
+    if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS && canProcessKey) {
+        wireframeMode = !wireframeMode;
+        lastKeyPressTime = currentTime;
+        std::cout << "Switched to " << (wireframeMode ? "wireframe" : "solid") << " mode" << std::endl;
     }
 
     // Translation controls
@@ -134,12 +144,12 @@ void processInput(GLFWwindow* window, glm::mat4& model, float deltaTime, glm::ve
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f / SCALE_FACTOR));
     }
 
-    // Reset model matrix
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && canProcessKey) {
-        model = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));;
-        std::cout << "Reset position, rotation, and scale." << std::endl;
-        lastKeyPressTime = currentTime;
-    }
+    //// Reset model matrix
+    //if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && canProcessKey) {
+    //    model = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
+    //    std::cout << "Reset position, rotation, and scale." << std::endl;
+    //    lastKeyPressTime = currentTime;
+    //}
 }
 
 int main() {
@@ -147,12 +157,12 @@ int main() {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
-    
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Assignment 2 - 3D Model Viewer", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Assignment 2 - 3D Model Viewer (Wireframe)", NULL, NULL);
     if (window == NULL) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -171,9 +181,10 @@ int main() {
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "Controls:" << std::endl;
     std::cout << "  W/S/A/D - Move up/down/left/right" << std::endl;
-    std::cout << "  Q/E - Rotate around Z axis" << std::endl;
+    std::cout << "  Q/E - Rotate around Y axis" << std::endl;
     std::cout << "  R/F - Scale in the Z axis" << std::endl;
     std::cout << "  Space - Reset to initial position" << std::endl;
+    std::cout << "  Tab - Toggle wireframe mode" << std::endl;
     std::cout << "  Esc - Exit" << std::endl;
 
     // Compile shaders
@@ -232,11 +243,11 @@ int main() {
     // Position attribute
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    
+
     // Color attribute
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
-    
+
     // Normal attribute
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
@@ -247,9 +258,9 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     // Set up camera and projection
-    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));;
+    glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(0.2f));
     glm::mat4 view = glm::lookAt(
-        glm::vec3(0.0f, 0.3f, 2.0f),
+        glm::vec3(0.0f, 0.3f, 4.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f)
     );
@@ -261,13 +272,12 @@ int main() {
     );
 
     glm::vec3 rotationAxis = glm::vec3(0.0f, 1.0f, 0.0f);
-    bool wireframeMode = false;
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
 
     // Initial rotation to make the model visible
-    model = glm::rotate(model, glm::degrees(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Move it down
     model = glm::translate(model, glm::vec3(0.0f, -12.0f, 0.0f));
@@ -282,10 +292,14 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (wireframeMode)
+        // Set wireframe or solid mode
+        if (wireframeMode) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        else
+            glLineWidth(1.0f); // Set line width for wireframe
+        }
+        else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
 
         glUseProgram(shaderProgram);
 
