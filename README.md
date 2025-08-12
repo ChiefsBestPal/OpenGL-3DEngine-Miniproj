@@ -1,4 +1,5 @@
 # Simple Fun OpenGL 3D Engine and POCs: efficient R4 MVP transformations, shaders, scene rendering
+Should be directly usable with standard cmake+gpp build in VS! Try it out
 ## Custom models made to test raster, fragment shaders, GPU draw/frame buffers, optics/lighting/shadow volumes,textures etc...:
 ![image](https://github.com/user-attachments/assets/0192878d-8236-459b-9e14-585b7d49c0cc)
 
